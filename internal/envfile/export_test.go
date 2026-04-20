@@ -57,3 +57,17 @@ func TestExport_InvalidFormat(t *testing.T) {
 		t.Error("expected error for unsupported format")
 	}
 }
+
+func TestExport_Empty(t *testing.T) {
+	formats := []Format{FormatDotenv, FormatExport, FormatJSON}
+	for _, fmt := range formats {
+		out, err := Export([]Entry{}, fmt)
+		if err != nil {
+			t.Errorf("format %q: unexpected error for empty entries: %v", fmt, err)
+		}
+		if out == "" {
+			continue // empty output is acceptable
+		}
+		_ = out
+	}
+}
