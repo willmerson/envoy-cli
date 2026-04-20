@@ -19,20 +19,14 @@ var encryptCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("parse error: %w", err)
 		}
-		for i, e := range entries {
-			if e.Value == "" {
-				continue
-			}
-			enc, err := envfile.Encrypt(e.Value, encryptPassphrase)
-			if err != nil {
-				return fmt.Errorf("encrypt %s: %w", e.Key, err)
-			}
-			entries[i].Value = enc
+		count, err := encryptEntries(entries, encryptPassphrase)
+		if err != nil {
+			return err
 		}
 		if err := envfile.Write(envPath, entries); err != nil {
 			return fmt.Errorf("write error: %w", err)
 		}
-		fmt.Fprintf(os.Stdout, "Encrypted %d entries in %s\n", len(entries), envPath)
+		fmt.Fprintf(os.Stdout, "Encrypted %d entries in %s\n", count, envPath)
 		return nil
 	},
 }
@@ -45,22 +39,52 @@ var decryptCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("parse error: %w", err)
 		}
-		for i, e := range entries {
-			if e.Value == "" {
-				continue
-			}
-			dec, err := envfile.Decrypt(e.Value, encryptPassphrase)
-			if err != nil {
-				return fmt.Errorf("decrypt %s: %w", e.Key, err)
-			}
-			entries[i].Value = dec
+		count, err := decryptEntries(entries, encryptPassphrase)
+		if err != nil {
+			return err
 		}
 		if err := envfile.Write(envPath, entries); err != nil {
 			return fmt.Errorf("write error: %w", err)
 		}
-		fmt.Fprintf(os.Stdout, "Decrypted %d entries in %s\n", len(entries), envPath)
+		fmt.Fprintf(os.Stdout, "Decrypted %d entries in %s\n", count, envPath)
 		return nil
 	},
+}
+
+// encryptEntries encrypts all non-empty entry values in place using the given
+// passphrase and returns the number of entries processed.
+func encryptEntries(entries []envfile.Entry, passphrase string) (int, error) {
+	count := 0
+	for i, e := range entries {
+		if e.Value == "" {
+			continue
+		}
+		enc, err := envfile.Encrypt(e.Value, passphrase)
+		if err != nil {
+			return count, fmt.Errorf("encrypt %s: %w", e.Key, err)
+		}
+		entries[i].Value = enc
+		count++
+	}
+	return count, nil
+}
+
+// decryptEntries decrypts all non-empty entry values in place using the given
+// passphrase and returns the number of entries processed.
+func decryptEntries(entries []envfile.Entry, passphrase string) (int, error) {
+	count := 0
+	for i, e := range entries {
+		if e.Value == "" {
+			continue
+		}
+		dec, err := envfile.Decrypt(e.Value, passphrase)
+		if err != nil {
+			return count, fmt.Errorf("decrypt %s: %w", e.Key, err)
+		}
+		entries[i].Value = dec
+		count++
+	}
+	return count, nil
 }
 
 func init() {
