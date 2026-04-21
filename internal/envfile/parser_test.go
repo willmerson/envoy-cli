@@ -48,12 +48,25 @@ func TestParse_InvalidLine(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestParse_FileNotFound(t *testing.T) {
+	_, err := envfile.Parse("/nonexistent/path/.env")
+	assert.Error(t, err)
+}
+
 func TestSet_NewKey(t *testing.T) {
 	path := writeTempEnv(t, "EXISTING=yes\n")
 	ef, err := envfile.Parse(path)
 	require.NoError(t, err)
 	ef.Set("NEW_KEY", "hello")
 	assert.Equal(t, "hello", ef.ToMap()["NEW_KEY"])
+}
+
+func TestSet_UpdateExistingKey(t *testing.T) {
+	path := writeTempEnv(t, "EXISTING=old\n")
+	ef, err := envfile.Parse(path)
+	require.NoError(t, err)
+	ef.Set("EXISTING", "new")
+	assert.Equal(t, "new", ef.ToMap()["EXISTING"])
 }
 
 func TestDelete_ExistingKey(t *testing.T) {
@@ -64,4 +77,12 @@ func TestDelete_ExistingKey(t *testing.T) {
 	assert.True(t, ok)
 	_, exists := ef.ToMap()["TO_DELETE"]
 	assert.False(t, exists)
+}
+
+func TestDelete_NonExistentKey(t *testing.T) {
+	path := writeTempEnv(t, "KEY=value\n")
+	ef, err := envfile.Parse(path)
+	require.NoError(t, err)
+	ok := ef.Delete("MISSING")
+	assert.False(t, ok)
 }
