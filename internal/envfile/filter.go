@@ -36,6 +36,16 @@ func Filter(entries []Entry, opts FilterOptions) FilterResult {
 	return result
 }
 
+// Count returns the number of entries that match the given options.
+func Count(entries []Entry, opts FilterOptions) int {
+	return Filter(entries, opts).MatchedCount()
+}
+
+// MatchedCount returns the number of matched entries.
+func (r FilterResult) MatchedCount() int {
+	return len(r.Matched)
+}
+
 func matchesFilter(e Entry, opts FilterOptions) bool {
 	if opts.EmptyOnly && e.Value != "" {
 		return false
