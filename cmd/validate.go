@@ -21,15 +21,7 @@ var validateCmd = &cobra.Command{
 			return fmt.Errorf("failed to parse env file: %w", err)
 		}
 
-		var required []string
-		if requiredKeys != "" {
-			for _, k := range strings.Split(requiredKeys, ",") {
-				k = strings.TrimSpace(k)
-				if k != "" {
-					required = append(required, k)
-				}
-			}
-		}
+		required := parseRequiredKeys(requiredKeys)
 
 		result := envfile.Validate(entries, required)
 		if result.OK() {
@@ -42,6 +34,22 @@ var validateCmd = &cobra.Command{
 		os.Exit(1)
 		return nil
 	},
+}
+
+// parseRequiredKeys splits a comma-separated string of key names into a slice,
+// trimming whitespace and ignoring empty entries.
+func parseRequiredKeys(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	var keys []string
+	for _, k := range strings.Split(raw, ",") {
+		k = strings.TrimSpace(k)
+		if k != "" {
+			keys = append(keys, k)
+		}
+	}
+	return keys
 }
 
 func init() {
