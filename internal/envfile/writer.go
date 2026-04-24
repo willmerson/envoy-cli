@@ -27,7 +27,7 @@ func WriteTo(ef *EnvFile, path string) error {
 	}
 
 	if err := os.WriteFile(path, []byte(sb.String()), 0o644); err != nil {
-		return fmt.Errorf("writing env file: %w", err)
+		return fmt.Errorf("writing env file %q: %w", path, err)
 	}
 	return nil
 }
@@ -52,4 +52,14 @@ func (ef *EnvFile) Delete(key string) bool {
 		}
 	}
 	return false
+}
+
+// Get returns the value for the given key and whether the key was found.
+func (ef *EnvFile) Get(key string) (string, bool) {
+	for _, e := range ef.Entries {
+		if e.Key == key {
+			return e.Value, true
+		}
+	}
+	return "", false
 }
