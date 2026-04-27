@@ -24,6 +24,12 @@ type PromoteOptions struct {
 
 // Promote copies entries from src into dst according to opts.
 // It returns the merged slice and a summary of changes.
+//
+// Keys in src that do not match PrefixFilter (when set) are counted as skipped.
+// If StripPrefix is true and PrefixFilter is set, the prefix is removed from
+// each matching key before writing it to dst. An error is returned if stripping
+// the prefix would produce an empty key.
+// If Overwrite is false, existing keys in dst are left unchanged and counted as skipped.
 func Promote(src, dst []Entry, opts PromoteOptions) ([]Entry, PromoteResult, error) {
 	if src == nil {
 		return dst, PromoteResult{}, nil
@@ -74,4 +80,9 @@ func Promote(src, dst []Entry, opts PromoteOptions) ([]Entry, PromoteResult, err
 // FormatPromoteResult returns a human-readable summary of a PromoteResult.
 func FormatPromoteResult(r PromoteResult) string {
 	return fmt.Sprintf("promoted: %d added, %d updated, %d skipped", r.Added, r.Updated, r.Skipped)
+}
+
+// IsZero reports whether no changes were made during promotion.
+func (r PromoteResult) IsZero() bool {
+	return r.Added == 0 && r.Updated == 0
 }
